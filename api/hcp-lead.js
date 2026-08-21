@@ -1,5 +1,6 @@
 export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({ok:false,error:"Method not allowed"});
+ console.log("HCP_API_KEY present:", !!process.env.HCP_API_KEY);
  if(!process.env.HCP_API_KEY)return res.status(500).json({ok:false,error:"HCP_API_KEY is missing"});
  const {first,last,phone,email,address,city,zip,projectList,preferredDay,preferredTime}=req.body||{};
  if(!first||!last||!phone)return res.status(400).json({ok:false,error:"First name, last name, and phone are required."});
