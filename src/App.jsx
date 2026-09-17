@@ -319,6 +319,10 @@ export default function App(){
 
         if(!r.ok) throw new Error('submit failed');
 
+        if (typeof window.fbq === 'function') {
+          window.fbq('track', 'Lead');
+        }
+
         window.location.href='/thank-you.html';
        }catch(err){
         alert("We couldn't send your request yet. Please call Good Life at 970-610-6200.");
