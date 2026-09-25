@@ -101,6 +101,7 @@ export default function App(){
      <form
       id="qualification"
       className="form-card hero-form"
+      data-clarity-mask="true"
       onSubmit={async e=>{
        e.preventDefault();
        const payload={
