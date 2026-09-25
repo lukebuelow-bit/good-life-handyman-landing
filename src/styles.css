@@ -71,4 +71,6 @@ footer .brand img{width:230px;height:auto}
   .hero-form .form-grid label,.hero-form>label{margin-top:8px}
   .hero-form input{padding:10px 12px}
   .hero-form .submit{width:100%;justify-content:center;margin-top:12px;padding:12px 14px}
+  .mobile-sticky{transition:transform .28s ease,opacity .28s ease}
+  .mobile-sticky.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
 }

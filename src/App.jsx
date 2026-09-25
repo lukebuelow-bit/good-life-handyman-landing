@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useEffect,useState} from 'react';
 import {ArrowRight,Check,Wrench,ShieldCheck,Home,ClipboardList,ChevronDown,MapPin,Phone,Hammer,Paintbrush,DoorOpen} from 'lucide-react';
 
 const facts=[
@@ -50,6 +50,24 @@ function Title({eyebrow,title,text}){
 
 export default function App(){
  const [open,setOpen]=useState(0);
+ const [hideSticky,setHideSticky]=useState(true);
+
+ useEffect(()=>{
+  const target=document.getElementById('qualification');
+  if(!target||typeof IntersectionObserver==='undefined'){
+   setHideSticky(false);
+   return undefined;
+  }
+  const observer=new IntersectionObserver(([entry])=>{
+   setHideSticky(entry.isIntersecting);
+  },{
+   root:null,
+   threshold:0,
+   rootMargin:'0px 0px 88px 0px'
+  });
+  observer.observe(target);
+  return ()=>observer.disconnect();
+ },[]);
 
  const [form,setForm]=useState({
   name:'',
@@ -415,7 +433,12 @@ export default function App(){
    </div>
   </footer>
 
-  <a className="mobile-sticky" href="#qualification">
+  <a
+   className={hideSticky?'mobile-sticky is-hidden':'mobile-sticky'}
+   href="#qualification"
+   aria-hidden={hideSticky||undefined}
+   tabIndex={hideSticky?-1:undefined}
+  >
    Book Your In-Home Quote
   </a>
  </div>
