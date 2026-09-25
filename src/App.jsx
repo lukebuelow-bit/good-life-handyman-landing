@@ -319,9 +319,15 @@ export default function App(){
 
         if(!r.ok) throw new Error('submit failed');
 
+        const eventID = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
         if (typeof window.fbq === 'function') {
-          window.fbq('track', 'Lead');
+          window.fbq('track', 'Lead', {}, {eventID});
         }
+
+        try { sessionStorage.setItem('gl_lead_event_id', eventID); } catch (e) {}
 
         window.location.href='/thank-you.html';
        }catch(err){
@@ -492,7 +498,7 @@ export default function App(){
     <a className="brand" href="/" aria-label="Good Life Home Co.">
      <img src="/brand/good-life-lockup-white.svg" alt="Good Life Home Co."/>
     </a>
-    <span><Phone size={15}/>970-610-6200</span>
+    <span><Phone size={15}/><a href="tel:+19706106200">970-610-6200</a></span>
    </div>
   </footer>
 
