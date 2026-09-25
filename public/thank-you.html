@@ -24,7 +24,14 @@ body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f4f7f7;color:#1
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init','2554951171672190');
 fbq('track','PageView');
-fbq('track','Lead');
+(function(){
+  try{
+    var eventID=sessionStorage.getItem('gl_lead_event_id');
+    if(!eventID) return;
+    fbq('track','Lead',{},{eventID:eventID});
+    sessionStorage.removeItem('gl_lead_event_id');
+  }catch(e){}
+})();
 </script>
 </head>
 <body>
