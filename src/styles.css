@@ -44,7 +44,33 @@ footer .brand img{width:230px;height:auto}
 /* Handyman launch additions — reviews + real project showcase */
 .reviews-section{background:#fff}.review-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.review-grid article{border:1px solid var(--line);border-radius:20px;padding:26px;background:#fbfcfc}.review-stars{color:#b77a35;letter-spacing:.12em;font-size:18px}.review-grid p{font-size:17px;line-height:1.65;color:#42565f;min-height:84px}.review-grid b,.review-grid span{display:block}.review-grid span{font-size:11px;color:#7a8b91;margin-top:5px}.project-showcase{background:#eef4f3}.project-grid{display:grid;grid-template-columns:.78fr 1.22fr;gap:36px;align-items:center}.project-story{background:#0b2234;color:#fff;border-radius:24px;padding:34px}.project-story h3{font-size:34px;line-height:1.08;margin:10px 0 16px}.project-story p{color:#c8d5da;line-height:1.7}.project-story .eyebrow{color:#9fd1dc}.project-scope{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:24px 0}.project-scope span{display:flex;gap:7px;align-items:center;font-size:13px}.project-scope svg{color:#9fd1dc}.project-photos{display:grid;grid-template-columns:1fr 1fr;gap:12px}.project-photos figure{margin:0;position:relative;border-radius:16px;overflow:hidden;background:#dfe7e7;min-height:240px}.project-photos figure.tall{min-height:360px}.project-photos img{width:100%;height:100%;position:absolute;inset:0;object-fit:cover}.project-photos figcaption{position:absolute;left:10px;bottom:10px;background:rgba(7,25,36,.86);color:#fff;padding:7px 9px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:.03em}.project-note{text-align:center;color:#7a898f;font-size:10px;margin-top:16px}@media(max-width:900px){.review-grid,.project-grid{grid-template-columns:1fr}.review-grid p{min-height:0}}@media(max-width:640px){.review-grid{grid-template-columns:1fr}.project-photos{grid-template-columns:1fr 1fr}.project-photos figure,.project-photos figure.tall{min-height:220px}.project-story{padding:25px}.project-story h3{font-size:28px}.project-scope{grid-template-columns:1fr}}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-card>label{display:block;margin-top:16px}.form-card .submit{margin-top:8px}.btn-primary{background:var(--navy);color:#fff}@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+
+/* Lead form sits in the hero so a phone can reach it without scrolling the page */
+.hero-layout{display:grid;grid-template-columns:1.15fr .85fr;grid-template-areas:"intro form" "follow form" "card form";gap:22px 64px;align-items:start}
+.hero-intro{grid-area:intro}
+.hero-follow{grid-area:follow;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.hero-follow .micro{margin:0}
+.hero-form{grid-area:form}
+.hero-card{grid-area:card}
+.form-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 24px 70px #173a4a12}
+.form-card label{display:block;font-size:12px;font-weight:800;color:#53656d}
+.form-card input{width:100%;margin-top:7px;border:1px solid #cfdadd;border-radius:11px;padding:13px;background:#fbfcfc;color:var(--ink);font:inherit}
+.form-card .optional{font-weight:600;color:#87959a}
+.form-card .privacy{margin:8px 0 0;line-height:1.45}
+#qualification{scroll-margin-top:108px}
+@media(max-width:900px){
+  .hero-layout{grid-template-columns:1fr;grid-template-areas:"intro" "form" "follow" "card";gap:16px}
+}
 @media(max-width:640px){
- .mobile-sticky{transition:transform .28s ease,opacity .28s ease}
- .mobile-sticky.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
+  .hero{padding:12px 0 20px}
+  .hero-intro .eyebrow{margin-bottom:6px}
+  .hero-intro h1{font-size:32px;margin:0 0 8px}
+  .hero-intro .lead{font-size:15px;line-height:1.4;margin:0}
+  .hero-form{padding:14px 14px 12px;border-radius:18px}
+  .hero-form .form-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .hero-form .form-grid label,.hero-form>label{margin-top:8px}
+  .hero-form input{padding:10px 12px}
+  .hero-form .submit{width:100%;justify-content:center;margin-top:12px;padding:12px 14px}
+  .mobile-sticky{transition:transform .28s ease,opacity .28s ease}
+  .mobile-sticky.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
 }

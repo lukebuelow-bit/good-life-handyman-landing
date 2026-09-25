@@ -17,7 +17,7 @@ const services=[
 
 const faqs=[
  ['What happens during the in-home quote?','We walk the actual projects with you, gather the scope, measurements, photos and relevant conditions, then build and present a clear quote for the work.'],
- ['Is the quote free?','We do not advertise this as a free quote. Our office will explain any applicable visit or dispatch fee during booking and how it applies to approved work.'],
+ ['What happens at the in-home quote?','A Good Life team member walks through your list with you, scopes each item, and gives you a clear price before any work starts. No pressure.'],
  ['Can you start the work the same day?','Sometimes approved work may be able to begin during the same visit when the schedule, materials and scope allow, but we do not promise same-day completion.'],
  ['Do you only do drywall?','No. Drywall is one common need, but The Unfinished List is built for a range of handyman repairs, adjustments, installations and finish work around the home.'],
  ['What if plumbing is part of the project?','That is one of the advantages of Good Life. We are a professional handyman service with licensed plumbing capability under the same company.'],
@@ -26,6 +26,18 @@ const faqs=[
 
 function CTA({children='Book Your In-Home Quote'}){
  return <a className="btn primary" href="#qualification">{children}<ArrowRight size={18}/></a>
+}
+
+// One Lead call for a successful submit. thank-you.html replays the same eventID from sessionStorage.
+function trackSuccessfulLead(){
+ const eventID=(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')
+  ?crypto.randomUUID()
+  :`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+ if(typeof window.fbq==='function'){
+  window.fbq('track','Lead',{},{eventID});
+ }
+ try{sessionStorage.setItem('gl_lead_event_id',eventID)}catch(e){}
+ window.location.href='/thank-you.html';
 }
 
 function Title({eyebrow,title,text}){
@@ -38,11 +50,14 @@ function Title({eyebrow,title,text}){
 
 export default function App(){
  const [open,setOpen]=useState(0);
- const [hideSticky,setHideSticky]=useState(false);
+ const [hideSticky,setHideSticky]=useState(true);
 
  useEffect(()=>{
   const target=document.getElementById('qualification');
-  if(!target||typeof IntersectionObserver==='undefined') return undefined;
+  if(!target||typeof IntersectionObserver==='undefined'){
+   setHideSticky(false);
+   return undefined;
+  }
   const observer=new IntersectionObserver(([entry])=>{
    setHideSticky(entry.isIntersecting);
   },{
@@ -55,16 +70,10 @@ export default function App(){
  },[]);
 
  const [form,setForm]=useState({
-  first:'',
-  last:'',
+  name:'',
   phone:'',
-  email:'',
-  address:'',
-  city:'',
   zip:'',
-  projectList:'',
-  preferredDay:'flexible',
-  preferredTime:''
+  projectList:''
  });
 
  return <div>
@@ -80,13 +89,87 @@ export default function App(){
   <main>
 
    <section className="hero">
-    <div className="shell hero-grid">
-     <div>
+    <div className="shell hero-layout">
+     <div className="hero-intro">
       <div className="eyebrow">GOOD LIFE HANDYMAN SERVICE</div>
       <h1>Bring Us the Unfinished List.</h1>
       <p className="lead">
        The drywall patch. The door that needs adjusted. The loose trim. The half-finished project you were going to get back to three months ago. We’ll come out, walk the list with you, scope the work clearly and help you start knocking it out.
       </p>
+     </div>
+
+     <form
+      id="qualification"
+      className="form-card hero-form"
+      onSubmit={async e=>{
+       e.preventDefault();
+       const payload={
+        ...form,
+        campaign:'unfinished-list-handyman',
+        offer:'Book Your In-Home Quote'
+       };
+       try{
+        const r=await fetch('/api/hcp-lead',{
+         method:'POST',
+         headers:{'Content-Type':'application/json'},
+         body:JSON.stringify(payload)
+        });
+        if(!r.ok) throw new Error('submit failed');
+        trackSuccessfulLead();
+       }catch(err){
+        alert("We couldn't send your request yet. Please call Good Life at 970-610-6200.");
+       }
+      }}
+     >
+      <div className="form-grid">
+       <label>
+        Name
+        <input
+         required
+         value={form.name}
+         onChange={e=>setForm({...form,name:e.target.value})}
+        />
+       </label>
+       <label>
+        Phone
+        <input
+         required
+         type="tel"
+         value={form.phone}
+         onChange={e=>setForm({...form,phone:e.target.value})}
+        />
+       </label>
+      </div>
+      <label>
+       ZIP
+       <input
+        required
+        inputMode="numeric"
+        autoComplete="postal-code"
+        value={form.zip}
+        onChange={e=>setForm({...form,zip:e.target.value})}
+       />
+      </label>
+      <label>
+       What’s on your list? <span className="optional">Optional</span>
+       <input
+        value={form.projectList}
+        onChange={e=>setForm({...form,projectList:e.target.value})}
+        placeholder="Drywall repair, door adjustment, trim, half-finished project... tell us what you want us to look at."
+       />
+      </label>
+      <button className="btn btn-primary submit" type="submit">
+       Book Your In-Home Quote <ArrowRight size={18}/>
+      </button>
+      <p className="privacy">
+       Good Life may contact you about this request by phone, text, or email. Message/data rates may apply.
+      </p>
+      <p className="privacy">
+       Your request is not a confirmed appointment yet. Good Life will contact you to confirm a day and time.
+      </p>
+     </form>
+
+     <div className="hero-follow">
       <CTA/>
       <p className="micro">Professional handyman service from a local home-service team.</p>
       <div className="location"><MapPin size={16}/>Fort Collins • Windsor • Loveland</div>
@@ -303,173 +386,6 @@ export default function App(){
      <p className="project-note">
       Real Good Life project photos. Repair scope shown is specific to this home; every project is evaluated individually.
      </p>
-    </div>
-   </section>
-
-   <section className="section qualification" id="qualification">
-    <div className="shell">
-     <Title
-      eyebrow="START HERE"
-      title="Book your in-home quote."
-      text="Tell us what’s on your unfinished list. We’ll contact you to confirm the visit and walk the projects with you in your home."
-     />
-
-     <form
-      className="form-card"
-      onSubmit={async e=>{
-       e.preventDefault();
-
-       const payload={
-        ...form,
-        campaign:'unfinished-list-handyman',
-        offer:'Book Your In-Home Quote'
-       };
-
-       try{
-        const r=await fetch('/api/hcp-lead',{
-         method:'POST',
-         headers:{'Content-Type':'application/json'},
-         body:JSON.stringify(payload)
-        });
-
-        if(!r.ok) throw new Error('submit failed');
-
-        const eventID = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-        if (typeof window.fbq === 'function') {
-          window.fbq('track', 'Lead', {}, {eventID});
-        }
-
-        try { sessionStorage.setItem('gl_lead_event_id', eventID); } catch (e) {}
-
-        window.location.href='/thank-you.html';
-       }catch(err){
-        alert("We couldn't send your request yet. Please call Good Life at 970-610-6200.");
-       }
-      }}
-     >
-
-      <div className="form-grid">
-       <label>
-        First name
-        <input
-         required
-         value={form.first}
-         onChange={e=>setForm({...form,first:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Last name
-        <input
-         required
-         value={form.last}
-         onChange={e=>setForm({...form,last:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Mobile phone
-        <input
-         required
-         type="tel"
-         value={form.phone}
-         onChange={e=>setForm({...form,phone:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Email
-        <input
-         type="email"
-         value={form.email}
-         onChange={e=>setForm({...form,email:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Street address
-        <input
-         required
-         value={form.address}
-         onChange={e=>setForm({...form,address:e.target.value})}
-        />
-       </label>
-
-       <label>
-        City
-        <input
-         required
-         value={form.city}
-         onChange={e=>setForm({...form,city:e.target.value})}
-        />
-       </label>
-
-       <label>
-        ZIP code
-        <input
-         required
-         inputMode="numeric"
-         value={form.zip}
-         onChange={e=>setForm({...form,zip:e.target.value})}
-        />
-       </label>
-      </div>
-
-      <label>
-       What’s on your unfinished list?
-       <textarea
-        required
-        value={form.projectList}
-        onChange={e=>setForm({...form,projectList:e.target.value})}
-        placeholder="Drywall repair, door adjustment, trim, half-finished project... tell us what you want us to look at."
-       />
-      </label>
-
-      <div className="form-grid">
-       <label>
-        What day usually works best?
-        <select
-         value={form.preferredDay}
-         onChange={e=>setForm({...form,preferredDay:e.target.value})}
-        >
-         <option value="monday">Monday</option>
-         <option value="tuesday">Tuesday</option>
-         <option value="wednesday">Wednesday</option>
-         <option value="thursday">Thursday</option>
-         <option value="friday">Friday</option>
-         <option value="flexible">I'm flexible</option>
-        </select>
-       </label>
-
-       <label>
-        What time of day usually works best?
-        <input
-         required
-         value={form.preferredTime}
-         onChange={e=>setForm({...form,preferredTime:e.target.value})}
-         placeholder="Morning, after 3, anytime Thursday..."
-        />
-       </label>
-      </div>
-
-      <label className="consent">
-       <input type="checkbox" required/>
-       <span>
-        I agree that Good Life may contact me about this request by phone, text, or email. Message/data rates may apply.
-       </span>
-      </label>
-
-      <button className="btn btn-primary submit" type="submit">
-       Book Your In-Home Quote <ArrowRight size={18}/>
-      </button>
-
-      <p className="privacy">
-       Your request is not a confirmed appointment yet. Good Life will contact you to confirm a day and time.
-      </p>
-     </form>
     </div>
    </section>
 
