@@ -33,29 +33,18 @@ function resolveName(body) {
 
 function resolveLocation(body) {
   const street = clean(body.address);
-  let city = clean(body.city);
+  const city = clean(body.city);
   let zip = clean(body.zip);
   const cityOrZip = clean(body.cityOrZip);
 
-  if (cityOrZip) {
-    if (isZip(cityOrZip)) {
-      if (!zip) zip = cityOrZip;
-    } else if (!city) {
-      city = cityOrZip;
-    }
-  }
+  if (!zip && isZip(cityOrZip)) zip = cityOrZip;
 
-  return {
-    street,
-    city,
-    zip,
-    label: cityOrZip || [city, zip].filter(Boolean).join(" ")
-  };
+  return { street, city, zip };
 }
 
 // Housecall Pro Create Lead accepts a customer with first_name, last_name,
 // mobile_number, optional email, notes, and addresses[{street,city,state,zip}].
-// The shortened form collects one name, one phone, one city-or-ZIP, and the list.
+// The form collects name, phone, and ZIP. The project list is optional.
 // https://docs.housecallpro.com/docs/housecall-public-api/8961eaf9f1c28-create-lead
 export function buildHcpLead(body) {
   const source = body || {};
@@ -67,10 +56,10 @@ export function buildHcpLead(body) {
   const preferredTime = clean(source.preferredTime);
   const location = resolveLocation(source);
 
-  if (!person.first_name || !phone || !location.label) {
+  if (!person.first_name || !phone || !location.zip) {
     return {
       ok: false,
-      error: "Name, phone, and city or ZIP are required."
+      error: "Name, phone, and ZIP are required."
     };
   }
 
@@ -81,7 +70,8 @@ export function buildHcpLead(body) {
     "",
     `Name: ${person.entered}`,
     `Projects / unfinished list: ${projectList || "Not provided"}`,
-    `City or ZIP: ${location.label}`,
+    `ZIP: ${location.zip}`,
+    ...(location.city ? [`City: ${location.city}`] : []),
     location.street ? `Submitted address: ${location.street}` : "Street address: not collected",
     ...(preferredDay ? [`Preferred day: ${preferredDay}`] : []),
     ...(preferredTime ? [`Preferred time: ${preferredTime}`] : []),
@@ -107,9 +97,9 @@ export function buildHcpLead(body) {
   if (location.city) address.city = location.city;
   if (location.zip) address.zip = location.zip;
 
-  // No street is collected anymore. Repeat the city or ZIP as the street line
-  // so the address object HCP accepts is not submitted with a blank street.
-  if (!address.street) address.street = location.label;
+  // No street is collected. Repeat the ZIP as the street line so the
+  // address object is not submitted with a blank street.
+  if (!address.street) address.street = location.zip;
 
   customer.addresses = [address];
 
