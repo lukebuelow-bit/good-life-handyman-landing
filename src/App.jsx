@@ -40,16 +40,10 @@ export default function App(){
  const [open,setOpen]=useState(0);
 
  const [form,setForm]=useState({
-  first:'',
-  last:'',
+  name:'',
   phone:'',
-  email:'',
-  address:'',
-  city:'',
-  zip:'',
-  projectList:'',
-  preferredDay:'flexible',
-  preferredTime:''
+  cityOrZip:'',
+  projectList:''
  });
 
  return <div>
@@ -332,25 +326,16 @@ export default function App(){
 
       <div className="form-grid">
        <label>
-        First name
+        Name
         <input
          required
-         value={form.first}
-         onChange={e=>setForm({...form,first:e.target.value})}
+         value={form.name}
+         onChange={e=>setForm({...form,name:e.target.value})}
         />
        </label>
 
        <label>
-        Last name
-        <input
-         required
-         value={form.last}
-         onChange={e=>setForm({...form,last:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Mobile phone
+        Phone
         <input
          required
          type="tel"
@@ -360,85 +345,23 @@ export default function App(){
        </label>
 
        <label>
-        Email
-        <input
-         type="email"
-         value={form.email}
-         onChange={e=>setForm({...form,email:e.target.value})}
-        />
-       </label>
-
-       <label>
-        Street address
+        City or ZIP
         <input
          required
-         value={form.address}
-         onChange={e=>setForm({...form,address:e.target.value})}
-        />
-       </label>
-
-       <label>
-        City
-        <input
-         required
-         value={form.city}
-         onChange={e=>setForm({...form,city:e.target.value})}
-        />
-       </label>
-
-       <label>
-        ZIP code
-        <input
-         required
-         inputMode="numeric"
-         value={form.zip}
-         onChange={e=>setForm({...form,zip:e.target.value})}
+         value={form.cityOrZip}
+         onChange={e=>setForm({...form,cityOrZip:e.target.value})}
         />
        </label>
       </div>
 
       <label>
-       What’s on your unfinished list?
-       <textarea
+       What’s on your list?
+       <input
         required
         value={form.projectList}
         onChange={e=>setForm({...form,projectList:e.target.value})}
         placeholder="Drywall repair, door adjustment, trim, half-finished project... tell us what you want us to look at."
        />
-      </label>
-
-      <div className="form-grid">
-       <label>
-        What day usually works best?
-        <select
-         value={form.preferredDay}
-         onChange={e=>setForm({...form,preferredDay:e.target.value})}
-        >
-         <option value="monday">Monday</option>
-         <option value="tuesday">Tuesday</option>
-         <option value="wednesday">Wednesday</option>
-         <option value="thursday">Thursday</option>
-         <option value="friday">Friday</option>
-         <option value="flexible">I'm flexible</option>
-        </select>
-       </label>
-
-       <label>
-        What time of day usually works best?
-        <input
-         required
-         value={form.preferredTime}
-         onChange={e=>setForm({...form,preferredTime:e.target.value})}
-         placeholder="Morning, after 3, anytime Thursday..."
-        />
-       </label>
-      </div>
-
-      <label className="consent">
-       <input type="checkbox" required/>
-       <span>
-        I agree that Good Life may contact me about this request by phone, text, or email. Message/data rates may apply.
-       </span>
       </label>
 
       <button className="btn btn-primary submit" type="submit">
