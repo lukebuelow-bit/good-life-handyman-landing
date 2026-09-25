@@ -1,1 +1,16 @@
-{}
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path((?!api(?:/|$)).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "good-life-handyman-landing.vercel.app"
+        }
+      ],
+      "destination": "https://handyman.goodlifehomeco.pro/:path*",
+      "permanent": true
+    }
+  ]
+}
