@@ -57,6 +57,12 @@ footer .brand img{width:230px;height:auto}
 .form-card input{width:100%;margin-top:7px;border:1px solid #cfdadd;border-radius:11px;padding:13px;background:#fbfcfc;color:var(--ink);font:inherit}
 .form-card .optional{font-weight:600;color:#87959a}
 .form-card .privacy{margin:8px 0 0;line-height:1.45}
+.form-card .consent{display:flex!important;align-items:flex-start;gap:10px;margin:16px 0 10px;font-size:13px;font-weight:500!important;line-height:1.45;color:#17324d}
+.form-card .consent span{min-width:0;flex:1}
+.form-card .consent strong{font-weight:800;color:#102230}
+.form-card .consent a{color:#1f6f93;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.form-card .consent input[type=checkbox]{width:20px!important;height:20px;min-width:20px;margin:2px 0 0!important;flex:none;accent-color:#17324d}
+.form-card .sms-small-print{font-size:11px;line-height:1.45;color:#60717a;margin:10px 0 0}
 #qualification{scroll-margin-top:108px}
 @media(max-width:900px){
   .hero-layout{grid-template-columns:1fr;grid-template-areas:"intro" "form" "follow" "card";gap:16px}
@@ -71,6 +77,9 @@ footer .brand img{width:230px;height:auto}
   .hero-form .form-grid label,.hero-form>label{margin-top:8px}
   .hero-form input{padding:10px 12px}
   .hero-form .submit{width:100%;justify-content:center;margin-top:12px;padding:12px 14px}
+  .hero-form .consent{margin-top:14px;font-size:13px}
+  .hero-form .consent input[type=checkbox]{width:22px!important;height:22px;min-width:22px}
+  .hero-form .sms-small-print{margin-bottom:2px}
   .mobile-sticky{transition:transform .28s ease,opacity .28s ease}
   .mobile-sticky.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
 }
