@@ -1,9 +1,20 @@
+import {
+  HANDYMAN_LEAD_SOURCE,
+  HANDYMAN_NURTURE_TAG,
+  HANDYMAN_SMS_CONSENT_TEXT,
+  HANDYMAN_SMS_CONSENT_VERSION
+} from "./handyman-consent.js";
+
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
 function isZip(value) {
   return /^\d{5}(?:-\d{4})?$/.test(value);
+}
+
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function resolveName(body) {
@@ -42,11 +53,54 @@ function resolveLocation(body) {
   return { street, city, zip };
 }
 
+function toIsoUtc(now) {
+  const date = now instanceof Date ? now : now ? new Date(now) : new Date();
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid consent timestamp.");
+  }
+  return date.toISOString();
+}
+
+function resolvePageUrl(body, options) {
+  return clean(body.pageUrl) || clean(options.referer);
+}
+
+function smsConsentNote({ consented, recordedAt, pageUrl }) {
+  const lines = [
+    `SMS consent: ${consented ? "Yes" : "No"}`,
+    recordedAt,
+    pageUrl,
+    HANDYMAN_SMS_CONSENT_VERSION
+  ];
+  if (consented) lines.push(HANDYMAN_SMS_CONSENT_TEXT);
+  return lines.join("\n");
+}
+
+// Which Housecall Pro Create Lead fields persist lead source and tags is not
+// yet verified. This is the only place that maps them. Default: send both
+// top-level lead_source (string) and tags (string array) on the lead body,
+// and the same lead_source and tags on the nested customer.
+export function applyLeadSourceAndTags(lead, { leadSource, tags }) {
+  const source = String(leadSource);
+  const tagList = Array.isArray(tags) ? tags.map((tag) => String(tag)) : [];
+  const customer = lead && lead.customer ? lead.customer : {};
+
+  return {
+    ...lead,
+    lead_source: source,
+    tags: [...tagList],
+    customer: {
+      ...customer,
+      lead_source: source,
+      tags: [...tagList]
+    }
+  };
+}
+
 // Housecall Pro Create Lead accepts a customer with first_name, last_name,
 // mobile_number, optional email, notes, and addresses[{street,city,state,zip}].
-// The form collects name, phone, and ZIP. The project list is optional.
 // https://docs.housecallpro.com/docs/housecall-public-api/8961eaf9f1c28-create-lead
-export function buildHcpLead(body) {
+export function buildHcpLead(body, options = {}) {
   const source = body || {};
   const person = resolveName(source);
   const phone = clean(source.phone);
@@ -55,6 +109,7 @@ export function buildHcpLead(body) {
   const preferredDay = clean(source.preferredDay);
   const preferredTime = clean(source.preferredTime);
   const location = resolveLocation(source);
+  const consented = source.smsConsent === true;
 
   if (!person.first_name || !phone || !location.zip) {
     return {
@@ -63,6 +118,15 @@ export function buildHcpLead(body) {
     };
   }
 
+  if (email && !isEmail(email)) {
+    return {
+      ok: false,
+      error: "Enter a valid email address or leave email blank."
+    };
+  }
+
+  const recordedAt = toIsoUtc(options.now);
+  const pageUrl = resolvePageUrl(source, options);
   const summary = [
     "THE UNFINISHED LIST — HANDYMAN IN-HOME QUOTE",
     "",
@@ -77,7 +141,9 @@ export function buildHcpLead(body) {
     ...(preferredTime ? [`Preferred time: ${preferredTime}`] : []),
     "",
     "Campaign: The Unfinished List",
-    "CTA: Book Your In-Home Quote"
+    "CTA: Book Your In-Home Quote",
+    "",
+    smsConsentNote({ consented, recordedAt, pageUrl })
   ].join("\n");
 
   const customer = {
@@ -103,7 +169,20 @@ export function buildHcpLead(body) {
 
   customer.addresses = [address];
 
-  return { ok: true, customer };
+  const tags = consented ? [HANDYMAN_NURTURE_TAG] : [];
+  const lead = applyLeadSourceAndTags(
+    { customer },
+    { leadSource: HANDYMAN_LEAD_SOURCE, tags }
+  );
+
+  return { ok: true, body: lead };
+}
+
+function headerValue(req, name) {
+  const headers = req.headers || {};
+  const value = headers[name];
+  if (Array.isArray(value)) return value[0] || "";
+  return typeof value === "string" ? value : "";
 }
 
 export default async function handler(req, res) {
@@ -111,7 +190,10 @@ export default async function handler(req, res) {
   console.log("HCP_API_KEY present:", !!process.env.HCP_API_KEY);
   if (!process.env.HCP_API_KEY) return res.status(500).json({ ok: false, error: "HCP_API_KEY is missing" });
 
-  const built = buildHcpLead(req.body || {});
+  const built = buildHcpLead(req.body || {}, {
+    now: new Date(),
+    referer: headerValue(req, "referer") || headerValue(req, "referrer")
+  });
   if (!built.ok) return res.status(400).json({ ok: false, error: built.error });
 
   try {
@@ -122,7 +204,7 @@ export default async function handler(req, res) {
         Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ customer: built.customer })
+      body: JSON.stringify(built.body)
     });
     const text = await response.text();
     let data;

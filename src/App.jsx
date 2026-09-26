@@ -1,5 +1,15 @@
 import React,{useEffect,useState} from 'react';
 import {ArrowRight,Check,Wrench,ShieldCheck,Home,ClipboardList,ChevronDown,MapPin,Phone,Hammer,Paintbrush,DoorOpen} from 'lucide-react';
+import {
+ HANDYMAN_SMS_CONSENT_BODY,
+ HANDYMAN_SMS_CONSENT_LEAD,
+ HANDYMAN_SMS_LINK_SEPARATOR,
+ HANDYMAN_SMS_PRIVACY_LABEL,
+ HANDYMAN_SMS_PRIVACY_URL,
+ HANDYMAN_SMS_SMALL_PRINT,
+ HANDYMAN_SMS_TERMS_LABEL,
+ HANDYMAN_SMS_TERMS_URL
+} from '../api/handyman-consent.js';
 
 const facts=[
  [ClipboardList,'Walk the real list','We look at the actual projects in your home—not a generic menu of services.'],
@@ -63,7 +73,9 @@ export default function App(){
   },{
    root:null,
    threshold:0,
-   rootMargin:'0px 0px 88px 0px'
+   // Hide the fixed CTA before it can overlap the form, including the
+   // consent checkbox that sits above Submit.
+   rootMargin:'0px 0px 140px 0px'
   });
   observer.observe(target);
   return ()=>observer.disconnect();
@@ -72,8 +84,10 @@ export default function App(){
  const [form,setForm]=useState({
   name:'',
   phone:'',
+  email:'',
   zip:'',
-  projectList:''
+  projectList:'',
+  smsConsent:false
  });
 
  return <div>
@@ -106,6 +120,8 @@ export default function App(){
        e.preventDefault();
        const payload={
         ...form,
+        smsConsent:form.smsConsent===true,
+        pageUrl:window.location.href,
         campaign:'unfinished-list-handyman',
         offer:'Book Your In-Home Quote'
        };
@@ -142,6 +158,18 @@ export default function App(){
        </label>
       </div>
       <label>
+       Email <span className="optional">Optional</span>
+       <input
+        type="email"
+        name="email"
+        autoComplete="email"
+        inputMode="email"
+        data-clarity-mask="true"
+        value={form.email}
+        onChange={e=>setForm({...form,email:e.target.value})}
+       />
+      </label>
+      <label>
        ZIP
        <input
         required
@@ -159,9 +187,25 @@ export default function App(){
         placeholder="Drywall repair, door adjustment, trim, half-finished project... tell us what you want us to look at."
        />
       </label>
+      <label className="consent">
+       <input
+        type="checkbox"
+        name="smsConsent"
+        checked={form.smsConsent}
+        onChange={e=>setForm({...form,smsConsent:e.target.checked})}
+       />
+       <span>
+        <strong>{HANDYMAN_SMS_CONSENT_LEAD}</strong>
+        {HANDYMAN_SMS_CONSENT_BODY}
+        <a href={HANDYMAN_SMS_TERMS_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_TERMS_LABEL}</a>
+        {HANDYMAN_SMS_LINK_SEPARATOR}
+        <a href={HANDYMAN_SMS_PRIVACY_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_PRIVACY_LABEL}</a>
+       </span>
+      </label>
       <button className="btn btn-primary submit" type="submit">
        Book Your In-Home Quote <ArrowRight size={18}/>
       </button>
+      <p className="privacy sms-small-print">{HANDYMAN_SMS_SMALL_PRINT}</p>
       <p className="privacy">
        Good Life may contact you about this request by phone, text, or email. Message/data rates may apply.
       </p>
