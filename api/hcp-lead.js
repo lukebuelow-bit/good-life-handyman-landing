@@ -1,9 +1,36 @@
 import {
   HANDYMAN_LEAD_SOURCE,
   HANDYMAN_NURTURE_TAG,
+  HANDYMAN_SMS_CONSENT_REQUIRED,
   HANDYMAN_SMS_CONSENT_TEXT,
   HANDYMAN_SMS_CONSENT_VERSION
 } from "./handyman-consent.js";
+import {
+  fieldLengthError,
+  hasAllowedRequestSource,
+  honeypotFilled,
+  isProductionEnv,
+  normalizeUsPhone,
+  submittedTooFast
+} from "./lead-guard.js";
+
+export const ACCEPTED_LEAD_MESSAGE = "Handyman quote request created successfully.";
+export const HCP_LEADS_URL = "https://api.housecallpro.com/leads";
+
+// Read at request time so tests can cover the required-consent branch.
+export const leadFormPolicy = {
+  requireSmsConsent: HANDYMAN_SMS_CONSENT_REQUIRED
+};
+
+const nativeFetch = globalThis.fetch;
+
+export function acceptedLeadBody(leadId) {
+  return {
+    ok: true,
+    message: ACCEPTED_LEAD_MESSAGE,
+    leadId: leadId || null
+  };
+}
 
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -103,7 +130,8 @@ export function applyLeadSourceAndTags(lead, { leadSource, tags }) {
 export function buildHcpLead(body, options = {}) {
   const source = body || {};
   const person = resolveName(source);
-  const phone = clean(source.phone);
+  const rawPhone = clean(source.phone);
+  const phone = normalizeUsPhone(rawPhone);
   const email = clean(source.email);
   const projectList = clean(source.projectList);
   const preferredDay = clean(source.preferredDay);
@@ -111,10 +139,17 @@ export function buildHcpLead(body, options = {}) {
   const location = resolveLocation(source);
   const consented = source.smsConsent === true;
 
-  if (!person.first_name || !phone || !location.zip) {
+  if (!person.first_name || !rawPhone || !location.zip) {
     return {
       ok: false,
       error: "Name, phone, and ZIP are required."
+    };
+  }
+
+  if (!phone) {
+    return {
+      ok: false,
+      error: "Enter a valid 10-digit US phone number."
     };
   }
 
@@ -180,32 +215,90 @@ export function buildHcpLead(body, options = {}) {
 
 function headerValue(req, name) {
   const headers = req.headers || {};
-  const value = headers[name];
+  const key = String(name).toLowerCase();
+  const value = headers[key] ?? headers[name];
   if (Array.isArray(value)) return value[0] || "";
   return typeof value === "string" ? value : "";
 }
 
+export function screenLeadRequest(body, options = {}) {
+  const source = body && typeof body === "object" && !Array.isArray(body) ? body : {};
+  const now = options.now instanceof Date ? options.now : new Date();
+  const production = options.production ?? isProductionEnv();
+  const requireSmsConsent = options.requireSmsConsent ?? leadFormPolicy.requireSmsConsent;
+
+  if (honeypotFilled(source)) return { disposition: "drop", reason: "honeypot" };
+  if (submittedTooFast(source.form_started_at, now)) return { disposition: "drop", reason: "too_fast" };
+  if (!hasAllowedRequestSource(options.origin, options.referer, { production })) {
+    return { disposition: "drop", reason: "origin" };
+  }
+
+  const lengthError = fieldLengthError(source);
+  if (lengthError) return { disposition: "invalid", status: 400, error: lengthError };
+
+  const rawPhone = clean(source.phone);
+  if (rawPhone && !normalizeUsPhone(rawPhone)) {
+    return {
+      disposition: "invalid",
+      status: 400,
+      error: "Enter a valid 10-digit US phone number."
+    };
+  }
+
+  if (requireSmsConsent && source.smsConsent !== true) {
+    return { disposition: "invalid", status: 400, error: "Consent is required." };
+  }
+
+  const built = buildHcpLead(source, {
+    now,
+    referer: typeof options.referer === "string" ? options.referer : ""
+  });
+  if (!built.ok) return { disposition: "invalid", status: 400, error: built.error };
+  return { disposition: "ok", lead: built.body };
+}
+
+async function postLead(body) {
+  if (process.env.NODE_ENV === "test" && globalThis.fetch === nativeFetch) {
+    const error = new Error("Refusing live Housecall Pro call from tests.");
+    error.code = "HCP_TEST_GUARD";
+    throw error;
+  }
+
+  return globalThis.fetch(HCP_LEADS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.HCP_API_KEY}`,
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
+
+  const referer = headerValue(req, "referer") || headerValue(req, "referrer");
+  const screened = screenLeadRequest(req.body, {
+    now: new Date(),
+    origin: headerValue(req, "origin"),
+    referer,
+    production: isProductionEnv()
+  });
+
+  if (screened.disposition === "drop") {
+    console.log("HCP HANDYMAN LEAD DROPPED:", screened.reason);
+    return res.status(200).json(acceptedLeadBody(null));
+  }
+  if (screened.disposition !== "ok") {
+    return res.status(screened.status || 400).json({ ok: false, error: screened.error });
+  }
+
   console.log("HCP_API_KEY present:", !!process.env.HCP_API_KEY);
   if (!process.env.HCP_API_KEY) return res.status(500).json({ ok: false, error: "HCP_API_KEY is missing" });
 
-  const built = buildHcpLead(req.body || {}, {
-    now: new Date(),
-    referer: headerValue(req, "referer") || headerValue(req, "referrer")
-  });
-  if (!built.ok) return res.status(400).json({ ok: false, error: built.error });
-
   try {
-    const response = await fetch("https://api.housecallpro.com/leads", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.HCP_API_KEY}`,
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(built.body)
-    });
+    const response = await postLead(screened.lead);
     const text = await response.text();
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
@@ -214,8 +307,9 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ ok: false, error: "Housecall Pro rejected the lead.", hcpStatus: response.status });
     }
     console.log("HCP HANDYMAN LEAD CREATED:", { status: response.status, leadId: data?.id || null, customerId: data?.customer?.id || null });
-    return res.status(200).json({ ok: true, message: "Handyman quote request created successfully.", leadId: data?.id || null });
+    return res.status(200).json(acceptedLeadBody(data?.id || null));
   } catch (error) {
+    if (error && error.code === "HCP_TEST_GUARD") throw error;
     console.error("HCP HANDYMAN LEAD ERROR:", error);
     return res.status(500).json({ ok: false, error: "Unable to create handyman quote request." });
   }

@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {ArrowRight,Check,Wrench,ShieldCheck,Home,ClipboardList,ChevronDown,MapPin,Phone,Hammer,Paintbrush,DoorOpen} from 'lucide-react';
 import {
  HANDYMAN_SMS_CONSENT_BODY,
@@ -89,6 +89,8 @@ export default function App(){
   projectList:'',
   smsConsent:false
  });
+ const [formStartedAt]=useState(()=>Date.now());
+ const companyWebsiteRef=useRef(null);
 
  return <div>
   <header className="nav">
@@ -123,7 +125,9 @@ export default function App(){
         smsConsent:form.smsConsent===true,
         pageUrl:window.location.href,
         campaign:'unfinished-list-handyman',
-        offer:'Book Your In-Home Quote'
+        offer:'Book Your In-Home Quote',
+        company_website:companyWebsiteRef.current?companyWebsiteRef.current.value:'',
+        form_started_at:formStartedAt
        };
        try{
         const r=await fetch('/api/hcp-lead',{
@@ -202,6 +206,21 @@ export default function App(){
         <a href={HANDYMAN_SMS_PRIVACY_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_PRIVACY_LABEL}</a>
        </span>
       </label>
+      <div className="company-website" aria-hidden="true">
+       <label>
+        Company website
+        <input
+         type="text"
+         name="company_website"
+         tabIndex={-1}
+         autoComplete="off"
+         aria-hidden="true"
+         defaultValue=""
+         ref={companyWebsiteRef}
+        />
+       </label>
+      </div>
+      <input type="hidden" name="form_started_at" defaultValue={formStartedAt}/>
       <button className="btn btn-primary submit" type="submit">
        Book Your In-Home Quote <ArrowRight size={18}/>
       </button>

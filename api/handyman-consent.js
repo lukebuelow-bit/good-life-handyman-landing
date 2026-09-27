@@ -27,3 +27,7 @@ export const HANDYMAN_SMS_SMALL_PRINT =
 
 export const HANDYMAN_LEAD_SOURCE = "LP-Handyman";
 export const HANDYMAN_NURTURE_TAG = "nurture-handyman";
+
+// The SMS checkbox is optional. The approved copy says consent is not a
+// condition of purchase. Keep this false unless that checkbox is required.
+export const HANDYMAN_SMS_CONSENT_REQUIRED = false;
