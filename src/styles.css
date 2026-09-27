@@ -83,3 +83,20 @@ footer .brand img{width:230px;height:auto}
   .mobile-sticky{transition:transform .28s ease,opacity .28s ease}
   .mobile-sticky.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none}
 }
+
+/* Off-screen honeypot. Transformed out of view so it does not change layout or add scroll. */
+.form-card{position:relative}
+.company-website{
+  position:absolute;
+  left:0;
+  top:0;
+  width:1px;
+  height:1px;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  white-space:nowrap;
+  transform:translateX(-100vw);
+}
+.form-card .company-website label{margin:0}
+.form-card .company-website input{width:1px;height:1px;margin:0;padding:0;border:0}
