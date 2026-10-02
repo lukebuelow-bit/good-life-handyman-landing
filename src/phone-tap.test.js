@@ -70,8 +70,8 @@ function installWindow() {
 test('a tel: tap fires Contact, Clarity, and Vercel without blocking the call', () => {
   const calls = installWindow();
   const icon = element('svg');
-  const header = element('a', { href: 'tel:+19706106200' }, [icon]);
-  const footer = element('a', { href: 'tel:+19706106200' }, [element('span')]);
+  const header = element('a', { href: 'tel:+19706346512' }, [icon]);
+  const footer = element('a', { href: 'tel:+19706346512' }, [element('span')]);
   const sticky = element('a', { href: '#qualification' });
   const page = element('div', {}, [header, footer, sticky]);
   const unbind = bindPhoneTapTracking(page);
@@ -79,7 +79,7 @@ test('a tel: tap fires Contact, Clarity, and Vercel without blocking the call', 
   const headerClick = click(icon);
   assert.equal(page.dispatchEvent(headerClick), true);
   assert.equal(headerClick.defaultPrevented, false);
-  assert.equal(header.getAttribute('href'), 'tel:+19706106200');
+  assert.equal(header.getAttribute('href'), 'tel:+19706346512');
 
   const footerClick = click(footer);
   page.dispatchEvent(footerClick);
@@ -116,13 +116,13 @@ test('a tel: tap fires Contact, Clarity, and Vercel without blocking the call', 
 
 test('missing fbq and clarity do not throw or cancel the tel: link', () => {
   globalThis.window = { va: () => {} };
-  const link = element('a', { href: 'tel:+19706106200' });
+  const link = element('a', { href: 'tel:+19706346512' });
   const page = element('div', {}, [link]);
   const unbind = bindPhoneTapTracking(page);
   const event = click(link);
   assert.doesNotThrow(() => page.dispatchEvent(event));
   assert.equal(event.defaultPrevented, false);
-  assert.equal(link.getAttribute('href'), 'tel:+19706106200');
+  assert.equal(link.getAttribute('href'), 'tel:+19706346512');
   unbind();
   delete globalThis.window;
 });
@@ -137,7 +137,7 @@ test('a throwing pixel still leaves the phone link navigable', () => {
     },
     va: () => {}
   };
-  const link = element('a', { href: 'tel:+19706106200' });
+  const link = element('a', { href: 'tel:+19706346512' });
   const page = element('div', {}, [link]);
   const unbind = bindPhoneTapTracking(page);
   const event = click(link);
@@ -151,6 +151,8 @@ test('the landing page delegates phone taps and keeps the Meta pixel', () => {
   const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8');
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(app, /bindPhoneTapTracking\(\)/);
-  assert.match(app, /href="tel:\+19706106200"/);
+  assert.match(app, /href="tel:\+19706346512"/);
+  assert.match(app, /\(970\) 634-6512/);
+  assert.match(html, /Call or text \(970\) 634-6512/);
   assert.match(html, /fbq\('init','2554951171672190'\)/);
 });

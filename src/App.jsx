@@ -102,9 +102,9 @@ export default function App(){
     <a className="brand" href="/" aria-label="Good Life Home Co.">
      <img src="/brand/good-life-lockup-color.svg" alt="Good Life Home Co."/>
     </a>
-    <a className="nav-phone" href="tel:+19706106200">
+    <a className="nav-phone" href="tel:+19706346512">
      <Phone size={16} aria-hidden="true"/>
-     (970) 610-6200
+     (970) 634-6512
     </a>
     <a className="btn small" href="#qualification">Book Your In-Home Quote</a>
    </div>
@@ -146,7 +146,7 @@ export default function App(){
         if(!r.ok) throw new Error('submit failed');
         trackSuccessfulLead();
        }catch(err){
-        alert("We couldn't send your request yet. Please call Good Life at 970-610-6200.");
+        alert("We couldn't send your request yet. Please call Good Life at (970) 634-6512.");
        }
       }}
      >
@@ -520,7 +520,7 @@ export default function App(){
     <a className="brand" href="/" aria-label="Good Life Home Co.">
      <img src="/brand/good-life-lockup-white.svg" alt="Good Life Home Co."/>
     </a>
-    <span><Phone size={15}/><a href="tel:+19706106200">(970) 610-6200</a></span>
+    <span><Phone size={15}/><a href="tel:+19706346512">(970) 634-6512</a></span>
    </div>
   </footer>
 
