@@ -10,6 +10,7 @@ import {
  HANDYMAN_SMS_TERMS_LABEL,
  HANDYMAN_SMS_TERMS_URL
 } from '../api/handyman-consent.js';
+import { bindPhoneTapTracking } from './phone-tap.js';
 
 const facts=[
  [ClipboardList,'Walk the real list','We look at the actual projects in your home—not a generic menu of services.'],
@@ -80,6 +81,8 @@ export default function App(){
   observer.observe(target);
   return ()=>observer.disconnect();
  },[]);
+
+ useEffect(()=>bindPhoneTapTracking(),[]);
 
  const [form,setForm]=useState({
   name:'',
