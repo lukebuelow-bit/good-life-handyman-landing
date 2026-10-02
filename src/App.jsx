@@ -89,6 +89,7 @@ export default function App(){
   projectList:'',
   smsConsent:false
  });
+ const [emailOpen,setEmailOpen]=useState(false);
  const [formStartedAt]=useState(()=>Date.now());
  const companyWebsiteRef=useRef(null);
 
@@ -97,6 +98,10 @@ export default function App(){
    <div className="shell nav-inner">
     <a className="brand" href="/" aria-label="Good Life Home Co.">
      <img src="/brand/good-life-lockup-color.svg" alt="Good Life Home Co."/>
+    </a>
+    <a className="nav-phone" href="tel:+19706106200">
+     <Phone size={16} aria-hidden="true"/>
+     (970) 610-6200
     </a>
     <a className="btn small" href="#qualification">Book Your In-Home Quote</a>
    </div>
@@ -162,18 +167,6 @@ export default function App(){
        </label>
       </div>
       <label>
-       Email <span className="optional">Optional</span>
-       <input
-        type="email"
-        name="email"
-        autoComplete="email"
-        inputMode="email"
-        data-clarity-mask="true"
-        value={form.email}
-        onChange={e=>setForm({...form,email:e.target.value})}
-       />
-      </label>
-      <label>
        ZIP
        <input
         required
@@ -188,9 +181,31 @@ export default function App(){
        <input
         value={form.projectList}
         onChange={e=>setForm({...form,projectList:e.target.value})}
-        placeholder="Drywall repair, door adjustment, trim, half-finished project... tell us what you want us to look at."
+        placeholder="Drywall repair, door adjustment, trim, half-finished project..."
        />
       </label>
+      {emailOpen?(
+       <label>
+        Email <span className="optional">Optional</span>
+        <input
+         type="email"
+         name="email"
+         autoComplete="email"
+         inputMode="email"
+         data-clarity-mask="true"
+         value={form.email}
+         onChange={e=>setForm({...form,email:e.target.value})}
+        />
+       </label>
+      ):(
+       <button
+        type="button"
+        className="email-toggle"
+        onClick={()=>setEmailOpen(true)}
+       >
+        Add email (optional)
+       </button>
+      )}
       <label className="consent">
        <input
         type="checkbox"
@@ -199,11 +214,8 @@ export default function App(){
         onChange={e=>setForm({...form,smsConsent:e.target.checked})}
        />
        <span>
-        <strong>{HANDYMAN_SMS_CONSENT_LEAD}</strong>
-        {HANDYMAN_SMS_CONSENT_BODY}
-        <a href={HANDYMAN_SMS_TERMS_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_TERMS_LABEL}</a>
-        {HANDYMAN_SMS_LINK_SEPARATOR}
-        <a href={HANDYMAN_SMS_PRIVACY_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_PRIVACY_LABEL}</a>
+        I agree to get texts from Good Life Home Co. about my request. Msg &amp; data rates may apply. Reply STOP to opt out. Consent isn't a condition of purchase.{' '}
+        <a href="#sms-terms">Terms &amp; privacy</a>
        </span>
       </label>
       <div className="company-website" aria-hidden="true">
@@ -224,13 +236,7 @@ export default function App(){
       <button className="btn btn-primary submit" type="submit">
        Book Your In-Home Quote <ArrowRight size={18}/>
       </button>
-      <p className="privacy sms-small-print">{HANDYMAN_SMS_SMALL_PRINT}</p>
-      <p className="privacy">
-       Good Life may contact you about this request by phone, text, or email. Message/data rates may apply.
-      </p>
-      <p className="privacy">
-       Your request is not a confirmed appointment yet. Good Life will contact you to confirm a day and time.
-      </p>
+      <p className="reassurance">We’ll call to set a time. No pressure, no obligation.</p>
      </form>
 
      <div className="hero-follow">
@@ -488,12 +494,30 @@ export default function App(){
 
   </main>
 
+  <section id="sms-terms" className="sms-terms">
+   <div className="shell">
+    <h2>SMS terms &amp; privacy</h2>
+    <p>
+     <strong>{HANDYMAN_SMS_CONSENT_LEAD}</strong>
+     {HANDYMAN_SMS_CONSENT_BODY}
+    </p>
+    <p>{HANDYMAN_SMS_SMALL_PRINT}</p>
+    <p>Good Life may contact you about this request by phone, text, or email. Message/data rates may apply.</p>
+    <p>Your request is not a confirmed appointment yet. Good Life will contact you to confirm a day and time.</p>
+    <p>
+     <a href={HANDYMAN_SMS_TERMS_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_TERMS_LABEL}</a>
+     {HANDYMAN_SMS_LINK_SEPARATOR}
+     <a href={HANDYMAN_SMS_PRIVACY_URL} target="_blank" rel="noopener noreferrer">{HANDYMAN_SMS_PRIVACY_LABEL}</a>
+    </p>
+   </div>
+  </section>
+
   <footer>
    <div className="shell footer">
     <a className="brand" href="/" aria-label="Good Life Home Co.">
      <img src="/brand/good-life-lockup-white.svg" alt="Good Life Home Co."/>
     </a>
-    <span><Phone size={15}/><a href="tel:+19706106200">970-610-6200</a></span>
+    <span><Phone size={15}/><a href="tel:+19706106200">(970) 610-6200</a></span>
    </div>
   </footer>
 
