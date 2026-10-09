@@ -10,6 +10,7 @@ import {
  HANDYMAN_SMS_TERMS_LABEL,
  HANDYMAN_SMS_TERMS_URL
 } from '../api/handyman-consent.js';
+import { eventIdFromLeadPayload, trackSuccessfulLead } from './lead-pixel.js';
 import { bindPhoneTapTracking } from './phone-tap.js';
 
 const facts=[
@@ -37,18 +38,6 @@ const faqs=[
 
 function CTA({children='Book Your In-Home Quote'}){
  return <a className="btn primary" href="#qualification">{children}<ArrowRight size={18}/></a>
-}
-
-// One Lead call for a successful submit. thank-you.html replays the same eventID from sessionStorage.
-function trackSuccessfulLead(){
- const eventID=(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')
-  ?crypto.randomUUID()
-  :`${Date.now()}-${Math.random().toString(16).slice(2)}`;
- if(typeof window.fbq==='function'){
-  window.fbq('track','Lead',{},{eventID});
- }
- try{sessionStorage.setItem('gl_lead_event_id',eventID)}catch(e){}
- window.location.href='/thank-you.html';
 }
 
 function Title({eyebrow,title,text}){
@@ -144,7 +133,9 @@ export default function App(){
          body:JSON.stringify(payload)
         });
         if(!r.ok) throw new Error('submit failed');
-        trackSuccessfulLead();
+        let leadPayload=null;
+        try{leadPayload=await r.json()}catch(err){leadPayload=null}
+        await trackSuccessfulLead(eventIdFromLeadPayload(leadPayload));
        }catch(err){
         alert("We couldn't send your request yet. Please call Good Life at (970) 634-6512.");
        }
