@@ -468,7 +468,8 @@ test("the form keeps the honeypot, load time, and success-only Lead event", () =
   assert.match(app, /form_started_at:formStartedAt/);
   assert.match(app, /company_website:companyWebsiteRef\.current\?companyWebsiteRef\.current\.value:''/);
   assert.match(css, /translateX\(-100vw\)/);
-  assert.match(app, /if\(!r\.ok\) throw new Error\('submit failed'\);\s*trackSuccessfulLead\(\);/);
+  assert.match(app, /if\(!r\.ok\) throw new Error\('submit failed'\);/);
+  assert.match(app, /let leadPayload=null;\s*try\{leadPayload=await r\.json\(\)\}catch\(err\)\{leadPayload=null\}\s*await trackSuccessfulLead\(eventIdFromLeadPayload\(leadPayload\)\);/);
   assert.match(entry, /import \{ inject \} from '@vercel\/analytics'/);
   assert.match(entry, /\binject\(\)/);
 });
