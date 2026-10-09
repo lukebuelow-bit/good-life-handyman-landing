@@ -5,6 +5,7 @@ import {
   HANDYMAN_SMS_CONSENT_TEXT,
   HANDYMAN_SMS_CONSENT_VERSION
 } from "./handyman-consent.js";
+import { deliverLeadAlert } from "./lead-alert.js";
 import {
   fieldLengthError,
   hasAllowedRequestSource,
@@ -257,6 +258,16 @@ export function screenLeadRequest(body, options = {}) {
   return { disposition: "ok", lead: built.body };
 }
 
+async function alertForLead(details) {
+  try {
+    await deliverLeadAlert(details);
+  } catch (error) {
+    console.error("LEAD ALERT FAILED:", {
+      code: error && error.code ? error.code : "LEAD_ALERT_ERROR"
+    });
+  }
+}
+
 async function postLead(body) {
   if (process.env.NODE_ENV === "test" && globalThis.fetch === nativeFetch) {
     const error = new Error("Refusing live Housecall Pro call from tests.");
@@ -295,7 +306,15 @@ export default async function handler(req, res) {
   }
 
   console.log("HCP_API_KEY present:", !!process.env.HCP_API_KEY);
-  if (!process.env.HCP_API_KEY) return res.status(500).json({ ok: false, error: "HCP_API_KEY is missing" });
+  if (!process.env.HCP_API_KEY) {
+    await alertForLead({
+      body: req.body,
+      lead: screened.lead,
+      saved: false,
+      failure: "HCP_API_KEY is missing."
+    });
+    return res.status(500).json({ ok: false, error: "HCP_API_KEY is missing" });
+  }
 
   try {
     const response = await postLead(screened.lead);
@@ -303,14 +322,33 @@ export default async function handler(req, res) {
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
     if (!response.ok) {
-      console.error("HCP HANDYMAN LEAD REJECTED:", response.status, data);
+      console.error("HCP HANDYMAN LEAD REJECTED:", response.status);
+      await alertForLead({
+        body: req.body,
+        lead: screened.lead,
+        saved: false,
+        failure: `Housecall Pro rejected the lead (HTTP ${response.status}).`
+      });
       return res.status(response.status).json({ ok: false, error: "Housecall Pro rejected the lead.", hcpStatus: response.status });
     }
-    console.log("HCP HANDYMAN LEAD CREATED:", { status: response.status, leadId: data?.id || null, customerId: data?.customer?.id || null });
-    return res.status(200).json(acceptedLeadBody(data?.id || null));
+    const leadId = data?.id || null;
+    console.log("HCP HANDYMAN LEAD CREATED:", { status: response.status, leadId, customerId: data?.customer?.id || null });
+    await alertForLead({
+      body: req.body,
+      lead: screened.lead,
+      saved: true,
+      leadId
+    });
+    return res.status(200).json(acceptedLeadBody(leadId));
   } catch (error) {
     if (error && error.code === "HCP_TEST_GUARD") throw error;
-    console.error("HCP HANDYMAN LEAD ERROR:", error);
+    console.error("HCP HANDYMAN LEAD ERROR:", error && error.code ? error.code : "HCP_LEAD_ERROR");
+    await alertForLead({
+      body: req.body,
+      lead: screened.lead,
+      saved: false,
+      failure: "Unable to create the Housecall Pro lead."
+    });
     return res.status(500).json({ ok: false, error: "Unable to create handyman quote request." });
   }
 }
