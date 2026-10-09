@@ -5,6 +5,7 @@ import {
   HANDYMAN_SMS_CONSENT_TEXT,
   HANDYMAN_SMS_CONSENT_VERSION
 } from "./handyman-consent.js";
+import { ATTRIBUTION_FIELDS, resolveAttribution } from "./attribution.js";
 import { deliverLeadAlert } from "./lead-alert.js";
 import {
   fieldLengthError,
@@ -163,6 +164,7 @@ export function buildHcpLead(body, options = {}) {
 
   const recordedAt = toIsoUtc(options.now);
   const pageUrl = resolvePageUrl(source, options);
+  const attribution = resolveAttribution(source, pageUrl);
   const summary = [
     "THE UNFINISHED LIST — HANDYMAN IN-HOME QUOTE",
     "",
@@ -178,6 +180,8 @@ export function buildHcpLead(body, options = {}) {
     "",
     "Campaign: The Unfinished List",
     "CTA: Book Your In-Home Quote",
+    "",
+    ATTRIBUTION_FIELDS.map((key) => `${key}: ${attribution[key]}`).join("\n"),
     "",
     smsConsentNote({ consented, recordedAt, pageUrl })
   ].join("\n");

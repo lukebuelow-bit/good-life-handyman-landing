@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, test } from "node:test";
+import { ATTRIBUTION_FIELDS } from "./attribution.js";
 import { HANDYMAN_SMS_CONSENT_REQUIRED } from "./handyman-consent.js";
 import {
   fieldLengthError,
@@ -442,9 +443,47 @@ test("a valid lead posts once to the mocked Housecall Pro endpoint", async () =>
   assert.equal(sent.customer.mobile_number, "9705550100");
   assert.equal(sent.customer.email, "jordan@example.com");
   assert.deepEqual(sent.tags, ["nurture-handyman"]);
+  for (const key of ATTRIBUTION_FIELDS) {
+    assert.match(sent.customer.notes, new RegExp(`^${key}: $`, "m"));
+  }
   assert.equal(Object.hasOwn(sent, "company_website"), false);
   assert.equal(Object.hasOwn(sent, "form_started_at"), false);
   assert.equal(fetchCalls.length, 1);
+});
+
+test("a mocked Housecall Pro lead stores body attribution ahead of pageUrl", async () => {
+  let sent;
+  globalThis.fetch = async (url, init) => {
+    fetchCalls.push(String(url));
+    assert.equal(String(url), "https://api.housecallpro.com/leads");
+    sent = JSON.parse(init.body);
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ id: "lead_mock_utm", customer: { id: "cus_mock_utm" } })
+    };
+  };
+
+  const res = mockRes();
+  await handler(mockReq(validBody({
+    pageUrl: `${ORIGIN}/?utm_source=from-url&utm_medium=cpc&fbclid=url-click`,
+    utm_source: "from-body",
+    utm_campaign: "unfinished-list",
+    utm_content: "video",
+    utm_term: "sticky door",
+    fbclid: ""
+  })), res);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.leadId, "lead_mock_utm");
+  assert.equal(fetchCalls.length, 1);
+  assert.match(sent.customer.notes, /^utm_source: from-body$/m);
+  assert.match(sent.customer.notes, /^utm_medium: cpc$/m);
+  assert.match(sent.customer.notes, /^utm_campaign: unfinished-list$/m);
+  assert.match(sent.customer.notes, /^utm_content: video$/m);
+  assert.match(sent.customer.notes, /^utm_term: sticky door$/m);
+  assert.match(sent.customer.notes, /^fbclid: url-click$/m);
+  assert.equal(sent.customer.notes.includes("utm_source: fb\n") || sent.customer.notes.includes("utm_source: fb"), false);
 });
 
 test("tests refuse a live Housecall Pro call when fetch is not mocked", async () => {

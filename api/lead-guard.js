@@ -13,7 +13,13 @@ const NOTES_FIELDS = [
   "comments",
   "preferredDay",
   "preferredTime",
-  "pageUrl"
+  "pageUrl",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "fbclid"
 ];
 
 const GOOD_LIFE_HOST = "goodlifehomeco.pro";

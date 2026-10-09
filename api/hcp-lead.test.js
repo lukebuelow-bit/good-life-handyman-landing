@@ -12,6 +12,7 @@ import {
   HANDYMAN_SMS_SMALL_PRINT,
   HANDYMAN_SMS_TERMS_LABEL
 } from "./handyman-consent.js";
+import { ATTRIBUTION_FIELDS } from "./attribution.js";
 import { applyLeadSourceAndTags, buildHcpLead } from "./hcp-lead.js";
 
 // These tests call buildHcpLead only. They must not request /api/hcp-lead
@@ -175,6 +176,68 @@ test("pageUrl is preferred over Referer", () => {
   const result = build({ smsConsent: true, pageUrl: PAGE }, { referer: REFERER });
   assert.match(result.body.customer.notes, new RegExp(PAGE.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.equal(result.body.customer.notes.includes(REFERER), false);
+});
+
+function attributionLines(notes) {
+  const values = {};
+  for (const key of ATTRIBUTION_FIELDS) {
+    const match = notes.match(new RegExp(`^${key}: (.*)$`, "m"));
+    assert.ok(match, `missing ${key} in notes`);
+    values[key] = match[1];
+  }
+  return values;
+}
+
+test("attribution from the body is stored verbatim and beats pageUrl", () => {
+  const pageUrl = `${PAGE}?utm_source=from-url&utm_medium=cpc&utm_campaign=url-campaign&fbclid=url-click`;
+  const result = build({
+    smsConsent: true,
+    pageUrl,
+    utm_source: "  Facebook  ",
+    utm_medium: "",
+    utm_campaign: "Spring 2026",
+    utm_content: "ad-1",
+    utm_term: "door repair",
+    fbclid: ""
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(attributionLines(result.body.customer.notes), {
+    utm_source: "  Facebook  ",
+    utm_medium: "cpc",
+    utm_campaign: "Spring 2026",
+    utm_content: "ad-1",
+    utm_term: "door repair",
+    fbclid: "url-click"
+  });
+  assert.equal(result.body.customer.notes.includes("utm_source: fb"), false);
+  assert.equal(result.body.customer.notes.includes("utm_source: facebook"), false);
+  assert.equal(result.body.customer.notes.includes("utm_source: meta"), false);
+});
+
+test("pageUrl attribution is stored when the body omits the fields", () => {
+  const pageUrl = `${PAGE}?utm_source=newsletter&utm_medium=email&utm_campaign=list&utm_content=hero&utm_term=patch&fbclid=IwAR0exact`;
+  const result = build({ smsConsent: false, pageUrl });
+  assert.deepEqual(attributionLines(result.body.customer.notes), {
+    utm_source: "newsletter",
+    utm_medium: "email",
+    utm_campaign: "list",
+    utm_content: "hero",
+    utm_term: "patch",
+    fbclid: "IwAR0exact"
+  });
+});
+
+test("missing attribution stays empty instead of a default source", () => {
+  const result = build({ smsConsent: false, pageUrl: PAGE });
+  assert.deepEqual(attributionLines(result.body.customer.notes), {
+    utm_source: "",
+    utm_medium: "",
+    utm_campaign: "",
+    utm_content: "",
+    utm_term: "",
+    fbclid: ""
+  });
 });
 
 test("non-boolean smsConsent does not opt in", () => {

@@ -10,6 +10,7 @@ import {
  HANDYMAN_SMS_TERMS_LABEL,
  HANDYMAN_SMS_TERMS_URL
 } from '../api/handyman-consent.js';
+import { attributionBodyFields, captureAttribution } from './attribution.js';
 import { eventIdFromLeadPayload, trackSuccessfulLead } from './lead-pixel.js';
 import { bindPhoneTapTracking } from './phone-tap.js';
 
@@ -72,6 +73,7 @@ export default function App(){
  },[]);
 
  useEffect(()=>bindPhoneTapTracking(),[]);
+ useEffect(()=>{ captureAttribution(); },[]);
 
  const [form,setForm]=useState({
   name:'',
@@ -121,6 +123,7 @@ export default function App(){
         ...form,
         smsConsent:form.smsConsent===true,
         pageUrl:window.location.href,
+        ...attributionBodyFields(),
         campaign:'unfinished-list-handyman',
         offer:'Book Your In-Home Quote',
         company_website:companyWebsiteRef.current?companyWebsiteRef.current.value:'',

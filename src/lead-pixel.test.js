@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
+  HANDYMAN_LEAD_PIXEL_PARAMS,
   UNSENT_LEAD_STORAGE_KEY,
   eventIdFromLeadPayload,
   isLeadPixelUrl,
@@ -106,7 +107,11 @@ test('a finished Lead image navigates once and leaves nothing for thank-you', as
 
   assert.equal(result.fallback, false);
   assert.equal(win.fbqCalls.length, 1);
-  assert.deepEqual(win.fbqCalls[0], ['track', 'Lead', {}, { eventID }]);
+  assert.deepEqual(win.fbqCalls[0], ['track', 'Lead', HANDYMAN_LEAD_PIXEL_PARAMS, { eventID }]);
+  assert.deepEqual(HANDYMAN_LEAD_PIXEL_PARAMS, {
+    content_name: 'handyman_quote',
+    content_category: 'handyman'
+  });
   assert.equal(win.location.href, '/thank-you.html');
   assert.equal(win.sessionStorage.getItem(UNSENT_LEAD_STORAGE_KEY), null);
 });
@@ -186,7 +191,7 @@ test('thank-you fires Lead only when the unsent id is still stored', () => {
   const html = readFileSync(new URL('../public/thank-you.html', import.meta.url), 'utf8');
   const guard = html.slice(html.indexOf("sessionStorage.getItem('gl_lead_event_id')"));
   assert.match(guard, /if\(!eventID\) return;/);
-  assert.match(guard, /sessionStorage\.removeItem\('gl_lead_event_id'\);\s*fbq\('track','Lead',\{\},\{eventID:eventID\}\);/);
+  assert.match(guard, /sessionStorage\.removeItem\('gl_lead_event_id'\);\s*fbq\('track','Lead',\{content_name:'handyman_quote',content_category:'handyman'\},\{eventID:eventID\}\);/);
   assert.equal(html.includes("fbq('track','Lead'"), true);
   const leadCalls = html.match(/fbq\('track','Lead'/g) || [];
   assert.equal(leadCalls.length, 1);

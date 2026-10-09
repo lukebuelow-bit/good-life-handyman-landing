@@ -11,6 +11,11 @@
 
 export const UNSENT_LEAD_STORAGE_KEY = 'gl_lead_event_id';
 
+export const HANDYMAN_LEAD_PIXEL_PARAMS = {
+  content_name: 'handyman_quote',
+  content_category: 'handyman'
+};
+
 const DEFAULT_START_TIMEOUT_MS = 4000;
 const DEFAULT_FINISH_TIMEOUT_MS = 10000;
 const DEFAULT_POLL_MS = 50;
@@ -327,7 +332,7 @@ export function trackSuccessfulLead(eventID, options = {}) {
     }
 
     try {
-      win.fbq('track', 'Lead', {}, { eventID });
+      win.fbq('track', 'Lead', HANDYMAN_LEAD_PIXEL_PARAMS, { eventID });
     } catch {
       finish(true);
       return;

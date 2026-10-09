@@ -31,7 +31,7 @@ fbq('track','PageView');
     var eventID=sessionStorage.getItem('gl_lead_event_id');
     if(!eventID) return;
     sessionStorage.removeItem('gl_lead_event_id');
-    fbq('track','Lead',{},{eventID:eventID});
+    fbq('track','Lead',{content_name:'handyman_quote',content_category:'handyman'},{eventID:eventID});
   }catch(e){}
 })();
 </script>
