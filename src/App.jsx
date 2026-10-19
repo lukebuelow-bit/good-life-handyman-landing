@@ -13,6 +13,7 @@ import {
 import { attributionBodyFields, captureAttribution } from './attribution.js';
 import { eventIdFromLeadPayload, trackSuccessfulLead } from './lead-pixel.js';
 import { bindPhoneTapTracking } from './phone-tap.js';
+import { trackFormSubmit } from './form-submit.js';
 
 const facts=[
  [ClipboardList,'Walk the real list','We look at the actual projects in your home—not a generic menu of services.'],
@@ -136,6 +137,7 @@ export default function App(){
          body:JSON.stringify(payload)
         });
         if(!r.ok) throw new Error('submit failed');
+        trackFormSubmit({serviceType:'handyman',attribution:payload});
         let leadPayload=null;
         try{leadPayload=await r.json()}catch(err){leadPayload=null}
         await trackSuccessfulLead(eventIdFromLeadPayload(leadPayload));
